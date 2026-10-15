@@ -101,7 +101,6 @@ final class ExecuteAbilityAbilityTest extends TestCase {
 	}
 
 	public function test_check_permission_with_nonexistent_ability(): void {
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
 		$result = ExecuteAbilityAbility::check_permission(
 			array(
 				'ability_name' => 'nonexistent/ability',
@@ -233,7 +232,7 @@ final class ExecuteAbilityAbilityTest extends TestCase {
 			)
 		);
 		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertEquals( 'ability_not_public_mcp', $result->get_error_code() );
+		$this->assertEquals( 'ability_not_found', $result->get_error_code() );
 
 		// Clean up
 		wp_unregister_ability( 'test/not-public-mcp' );
@@ -241,7 +240,6 @@ final class ExecuteAbilityAbilityTest extends TestCase {
 
 	public function test_check_permission_with_nonexistent_ability_for_mcp_check(): void {
 		// Test with an ability that doesn't exist (should fail at MCP exposure check)
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
 		$result = ExecuteAbilityAbility::check_permission(
 			array(
 				'ability_name' => 'nonexistent/test-ability',
@@ -303,7 +301,6 @@ final class ExecuteAbilityAbilityTest extends TestCase {
 	}
 
 	public function test_execute_with_nonexistent_ability(): void {
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
 		$result = ExecuteAbilityAbility::execute(
 			array(
 				'ability_name' => 'nonexistent/ability',
