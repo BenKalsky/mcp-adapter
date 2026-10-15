@@ -102,7 +102,7 @@ class HttpSessionValidator {
 	 * Create a session and report storage failures to an error handler.
 	 *
 	 * @since 0.6.0
-	 * @since n.e.x.t Omits client icons from stored parameters and rejects oversized parameters.
+	 * @since 0.6.2 Omits client icons from stored parameters and rejects oversized parameters.
 	 * @internal
 	 *
 	 * @param array                                                 $params        The client parameters from initialize request.
