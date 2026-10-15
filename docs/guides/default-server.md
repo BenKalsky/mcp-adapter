@@ -162,6 +162,8 @@ Two filters control session behavior:
 
 **`mcp_adapter_session_max_per_user`** — Maximum number of concurrent sessions a single user can have on the current site. When the limit is reached the oldest session is automatically evicted. Default: `32`.
 
+All of a user's sessions are stored in one user meta row, and each session keeps at most 4 KiB of serialized client initialization parameters. HTTP initialization omits `clientInfo.icons` from the stored copy before measuring it; all other accepted fields are retained. An `initialize` request with larger parameters is rejected with JSON-RPC `-32602` (Invalid params). With the default 32 sessions, the row stays under 140 KB and each write under 540 KB after SQL escaping. Raising the session limit scales both numbers linearly; keep the result inside your database server's `max_allowed_packet`.
+
 ```php
 // Allow at most 5 concurrent sessions per user on the current site
 add_filter( 'mcp_adapter_session_max_per_user', function () {
