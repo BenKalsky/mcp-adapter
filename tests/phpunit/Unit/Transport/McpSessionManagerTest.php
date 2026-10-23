@@ -437,6 +437,52 @@ final class McpSessionManagerTest extends TestCase {
 	}
 
 	/**
+	 * A row removed before recovery reads it raw leaves nothing to delete and no sessions to serve (#395).
+	 *
+	 * @since 0.7.2
+	 */
+	public function test_get_all_user_sessions_recovery_handles_a_row_removed_before_the_raw_read(): void {
+		$meta_key   = self::session_meta_key();
+		$legacy_map = array(
+			wp_generate_uuid4() => array(
+				'created_at'    => time(),
+				'last_activity' => time(),
+				'client_params' => array( 'blob' => str_repeat( 'x', 1024 * 1024 ) ),
+			),
+		);
+		$this->assertNotFalse( update_user_meta( $this->test_user_id, $meta_key, $legacy_map ) );
+		wp_cache_delete( $this->test_user_id, 'user_meta' );
+
+		$user_id = $this->test_user_id;
+		$raced   = false;
+		$deletes = 0;
+		$race    = static function ( string $query ) use ( $user_id, $meta_key, &$raced, &$deletes ): string {
+			if ( ! $raced && preg_match( '/^\s*SELECT\s+meta_value\b.*LIMIT 1/is', $query ) ) {
+				$raced = true;
+				delete_user_meta( $user_id, $meta_key );
+			}
+			if ( preg_match( '/^\s*DELETE\b.*MD5/is', $query ) ) {
+				++$deletes;
+			}
+
+			return $query;
+		};
+
+		DummyErrorHandler::reset();
+		add_filter( 'query', $race );
+		try {
+			$this->assertSame( array(), SessionManager::get_all_user_sessions( $this->test_user_id, new DummyErrorHandler() ) );
+			$this->assertTrue( $raced );
+			$this->assertSame( 0, $deletes );
+			$this->assertFalse( metadata_exists( 'user', $this->test_user_id, $meta_key ) );
+			$this->assertSame( array(), DummyErrorHandler::$logs );
+		} finally {
+			remove_filter( 'query', $race );
+			DummyErrorHandler::reset();
+		}
+	}
+
+	/**
 	 * Recovery salts the users query cache like delete_user_meta() does, and only when a row was deleted.
 	 *
 	 * @since 0.7.1
